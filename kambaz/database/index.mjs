@@ -1,10 +1,10 @@
-import users from "./users.mjs";
-import courses from "./courses.mjs";
-import modules from "./modules.mjs";
-import assignments from "./assignments.mjs";
-import enrollments from "./enrollments.mjs";
-import grades from "./grades.mjs";
+import courses from "./courses.json" with { type: "json" };
+import modules from "./modules.json" with { type: "json" };
+import assignments from "./assignments.json" with { type: "json" };
+import users from "./users.json" with { type: "json" };
+import enrollments from "./enrollments.json" with { type: "json" };
 
-const db = { users, courses, modules, assignments, enrollments, grades };
+const db = { courses, modules, assignments, users, enrollments };
 
 export default db;
+export { courses, modules, assignments, users, enrollments };
