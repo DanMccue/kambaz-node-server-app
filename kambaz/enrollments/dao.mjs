@@ -1,37 +1,46 @@
-import { randomUUID } from "node:crypto";
+import model from "./model.mjs";
 
 export default function EnrollmentsDao(db) {
-  function enrollUserInCourse(userId, courseId) {
-    const existingEnrollment = db.enrollments.find(
-      (enrollment) => enrollment.user === userId && enrollment.course === courseId
-    );
-    if (existingEnrollment) {
-      return existingEnrollment;
-    }
+  async function findCoursesForUser(userId) {
+    const enrollments = await model.find({ user: userId }).populate("course");
+    return enrollments.map((enrollment) => enrollment.course);
+  }
 
-    const enrollment = { _id: randomUUID(), user: userId, course: courseId };
-    db.enrollments.push(enrollment);
-    return enrollment;
+  async function findUsersForCourse(courseId) {
+    const enrollments = await model.find({ course: courseId }).populate("user");
+    return enrollments.map((enrollment) => enrollment.user);
+  }
+
+  function enrollUserInCourse(userId, courseId) {
+    return model.create({
+      user: userId,
+      course: courseId,
+      _id: `${userId}-${courseId}`,
+    });
   }
 
   function unenrollUserFromCourse(userId, courseId) {
-    db.enrollments = db.enrollments.filter(
-      (enrollment) => !(enrollment.user === userId && enrollment.course === courseId)
-    );
-    return { acknowledged: true };
+    return model.deleteOne({ user: userId, course: courseId });
   }
 
-  function findEnrollmentsForUser(userId) {
-    return db.enrollments.filter((enrollment) => enrollment.user === userId);
+  function unenrollAllUsersFromCourse(courseId) {
+    return model.deleteMany({ course: courseId });
   }
 
-  function findEnrollmentsForCourse(courseId) {
-    return db.enrollments.filter((enrollment) => enrollment.course === courseId);
+  async function findEnrollmentsForUser(userId) {
+    return model.find({ user: userId });
+  }
+
+  async function findEnrollmentsForCourse(courseId) {
+    return model.find({ course: courseId });
   }
 
   return {
+    findCoursesForUser,
+    findUsersForCourse,
     enrollUserInCourse,
     unenrollUserFromCourse,
+    unenrollAllUsersFromCourse,
     findEnrollmentsForUser,
     findEnrollmentsForCourse,
   };

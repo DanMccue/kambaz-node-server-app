@@ -1,35 +1,35 @@
-import { randomUUID } from "node:crypto";
+import model from "./model.mjs";
+import { v4 as uuidv4 } from "uuid";
 
 export default function UsersDao(db) {
   const createUser = (user) => {
-    const newUser = { ...user, _id: randomUUID() };
-    db.users = [...db.users, newUser];
-    return newUser;
+    const newUser = { ...user, _id: uuidv4() };
+    return model.create(newUser);
   };
 
-  const findAllUsers = () => db.users;
+  const findAllUsers = () => model.find();
 
-  const findUserById = (userId) => db.users.find((user) => user._id === userId);
+  const findUserById = (userId) => model.findById(userId);
 
   const findUserByUsername = (username) =>
-    db.users.find((user) => user.username === username);
+    model.findOne({ username: username });
 
   const findUserByCredentials = (username, password) =>
-    db.users.find(
-      (user) => user.username === username && user.password === password
-    );
+    model.findOne({ username, password });
 
-  const updateUser = (userId, userUpdates) => {
-    db.users = db.users.map((user) =>
-      user._id === userId ? { ...user, ...userUpdates, _id: userId } : user
-    );
-    return findUserById(userId);
+  const findUsersByRole = (role) => model.find({ role });
+
+  const findUsersByPartialName = (partialName) => {
+    const regex = new RegExp(partialName, "i");
+    return model.find({
+      $or: [{ firstName: { $regex: regex } }, { lastName: { $regex: regex } }],
+    });
   };
 
-  const deleteUser = (userId) => {
-    db.users = db.users.filter((user) => user._id !== userId);
-    return { acknowledged: true };
-  };
+  const updateUser = (userId, user) =>
+    model.updateOne({ _id: userId }, { $set: user });
+
+  const deleteUser = (userId) => model.deleteOne({ _id: userId });
 
   return {
     createUser,
@@ -37,6 +37,8 @@ export default function UsersDao(db) {
     findUserById,
     findUserByUsername,
     findUserByCredentials,
+    findUsersByRole,
+    findUsersByPartialName,
     updateUser,
     deleteUser,
   };

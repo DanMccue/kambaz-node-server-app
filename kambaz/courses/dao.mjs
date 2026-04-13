@@ -1,55 +1,31 @@
-import { randomUUID } from "node:crypto";
+import model from "./model.mjs";
+import { v4 as uuidv4 } from "uuid";
 
 export default function CoursesDao(db) {
   function findAllCourses() {
-    return db.courses;
+    return model.find({}, { name: 1, description: 1 });
   }
 
   function findCourseById(courseId) {
-    return db.courses.find((course) => course._id === courseId);
-  }
-
-  function findCoursesForEnrolledUser(userId) {
-    const { courses, enrollments } = db;
-    return courses.filter((course) =>
-      enrollments.some(
-        (enrollment) =>
-          enrollment.user === userId && enrollment.course === course._id
-      )
-    );
+    return model.findById(courseId);
   }
 
   function createCourse(course) {
-    const newCourse = { ...course, _id: randomUUID() };
-    db.courses = [...db.courses, newCourse];
-    return newCourse;
+    const newCourse = { ...course, _id: uuidv4() };
+    return model.create(newCourse);
   }
 
   function deleteCourse(courseId) {
-    db.courses = db.courses.filter((course) => course._id !== courseId);
-    db.enrollments = db.enrollments.filter(
-      (enrollment) => enrollment.course !== courseId
-    );
-    db.modules = db.modules.filter((module) => module.course !== courseId);
-    db.assignments = db.assignments.filter(
-      (assignment) => assignment.course !== courseId
-    );
-    return { acknowledged: true };
+    return model.deleteOne({ _id: courseId });
   }
 
   function updateCourse(courseId, courseUpdates) {
-    const course = findCourseById(courseId);
-    if (!course) {
-      return null;
-    }
-    Object.assign(course, courseUpdates);
-    return course;
+    return model.updateOne({ _id: courseId }, { $set: courseUpdates });
   }
 
   return {
     findAllCourses,
     findCourseById,
-    findCoursesForEnrolledUser,
     createCourse,
     deleteCourse,
     updateCourse,
